@@ -83,6 +83,8 @@ public:
   void powerOff();
   bool linkStatus();
 
+  static void setControlCS(int control_cs);
+
   static void init(uint8_t* macaddr);
   static memhandle receivePacket();
   static void freePacket();

@@ -47,9 +47,9 @@ extern "C" {
 #endif
 
 // set CS to 0 = active
-#define CSACTIVE digitalWrite(ENC28J60_CONTROL_CS, LOW)
+#define CSACTIVE digitalWrite(enc28j60_control_cs, LOW)
 // set CS to 1 = passive
-#define CSPASSIVE digitalWrite(ENC28J60_CONTROL_CS, HIGH)
+#define CSPASSIVE digitalWrite(enc28j60_control_cs, HIGH)
 //
 #if defined(ARDUINO_ARCH_AVR)
 #define waitspi() while(!(SPSR&(1<<SPIF)))
@@ -66,12 +66,18 @@ uint8_t Enc28J60Network::bank=0xff;
 
 struct memblock Enc28J60Network::receivePkt;
 
+static int enc28j60_control_cs = ENC28J60_CONTROL_CS;
+
+void Enc28J60Network::setControlCS(int control_cs) {
+  enc28j60_control_cs = control_cs;
+}
+
 void Enc28J60Network::init(uint8_t* macaddr)
 {
   MemoryPool::init(); // 1 byte in between RX_STOP_INIT and pool to allow prepending of controlbyte
   // initialize I/O
   // ss as output:
-  pinMode(ENC28J60_CONTROL_CS, OUTPUT);
+  pinMode(enc28j60_control_cs, OUTPUT);
   CSPASSIVE; // ss=0
   //
 
@@ -293,7 +299,7 @@ Enc28J60Network::setReadPtr(memhandle handle, memaddress position, uint16_t len)
   memaddress start = handle == UIP_RECEIVEBUFFERHANDLE && packet->begin + position > RXSTOP_INIT ? packet->begin + position-RXSTOP_INIT+RXSTART_INIT : packet->begin + position;
 
   writeRegPair(ERDPTL, start);
-  
+
   if (len > packet->size - position)
     len = packet->size - position;
   return len;
@@ -342,7 +348,7 @@ uint8_t Enc28J60Network::readByte(uint16_t addr)
   waitspi();
   CSPASSIVE;
   return (SPDR);
-#endif  
+#endif
 }
 
 void Enc28J60Network::writeByte(uint16_t addr, uint8_t data)
@@ -497,7 +503,7 @@ Enc28J60Network::readBuffer(uint16_t len, uint8_t* data)
 {
   CSACTIVE;
   // issue read command
-#if ENC28J60_USE_SPILIB  
+#if ENC28J60_USE_SPILIB
   SPI.transfer(ENC28J60_READ_BUF_MEM);
 #else
   SPDR = ENC28J60_READ_BUF_MEM;
@@ -507,13 +513,13 @@ Enc28J60Network::readBuffer(uint16_t len, uint8_t* data)
   {
     len--;
     // read data
-#if ENC28J60_USE_SPILIB    
+#if ENC28J60_USE_SPILIB
     *data = SPI.transfer(0x00);
 #else
     SPDR = 0x00;
     waitspi();
     *data = SPDR;
-#endif    
+#endif
     data++;
   }
   //*data='\0';
@@ -525,7 +531,7 @@ Enc28J60Network::writeBuffer(uint16_t len, uint8_t* data)
 {
   CSACTIVE;
   // issue write command
-#if ENC28J60_USE_SPILIB  
+#if ENC28J60_USE_SPILIB
   SPI.transfer(ENC28J60_WRITE_BUF_MEM);
 #else
   SPDR = ENC28J60_WRITE_BUF_MEM;
@@ -535,7 +541,7 @@ Enc28J60Network::writeBuffer(uint16_t len, uint8_t* data)
   {
     len--;
     // write data
-#if ENC28J60_USE_SPILIB  
+#if ENC28J60_USE_SPILIB
     SPI.transfer(*data);
     data++;
 #else
@@ -662,13 +668,13 @@ Enc28J60Network::chksum(uint16_t sum, memhandle handle, memaddress pos, uint16_t
     }
   }
   if(i == len) {
-#if ENC28J60_USE_SPILIB  
+#if ENC28J60_USE_SPILIB
     t = (SPI.transfer(0x00) << 8) + 0;
 #else
     SPDR = 0x00;
     waitspi();
     t = (SPDR << 8) + 0;
-#endif    
+#endif
     sum += t;
     if(sum < t) {
       sum++;            /* carry */
