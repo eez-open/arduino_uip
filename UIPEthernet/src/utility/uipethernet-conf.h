@@ -3,7 +3,7 @@
 
 /* for TCP */
 #define UIP_SOCKET_NUMPACKETS    5
-#define UIP_CONF_MAX_CONNECTIONS 4
+#define UIP_CONF_MAX_CONNECTIONS 2
 
 /* for UDP
  * set UIP_CONF_UDP to 0 to disable UDP (saves aprox. 5kb flash) */
